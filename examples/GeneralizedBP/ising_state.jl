@@ -18,6 +18,21 @@ include("utils.jl")
 include("generalizedbp.jl")
 
 ITensors.disable_warn_order()
+
+function bp_ising(beta, n; is_flat = true)
+    g = named_grid((n,n); periodic = true)
+    es = edges(g)
+    e_dict = Dictionary(es, [Index(2) for e in edges(g)])
+    e_dict = merge(e_dict, Dictionary(reverse.(es), collect(values(e_dict))))
+    Js = Dictionary(collect(edges(g)), [first(src(e)) == first(dst(e)) && isodd(first(src(e))) ? -1.0 : 1.0 for e in edges(g)])
+    if is_flat
+        ψ = ising_tensornetwork(g, beta; Js)
+    else
+        ψ = ising_tensornetwork_rdm(g, beta; Js)
+    end
+    ψ_bpc = update(BeliefPropagationCache(ψ))
+end
+
 function main()
 
     Random.seed!(584)
@@ -116,4 +131,4 @@ function main()
     #println("Loop corrected BP absolute error on free energy: ", abs(f_lc - f_exact))
 end
 
-main()
+#main()
